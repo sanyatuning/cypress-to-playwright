@@ -1,5 +1,12 @@
 import ts, { Expression, ModifierLike, ParameterDeclaration } from 'typescript';
-import { COMMANDS, LOCATOR_PROPERTIES, PLAYWRIGHT_PAGE_NAME, ROUTE, VALIDATION } from '../playwright.js';
+import {
+  COMMANDS,
+  LOCATOR_PROPERTIES,
+  PLAYWRIGHT_PAGE_NAME,
+  PLAYWRIGHT_PAGE_TYPE,
+  ROUTE,
+  VALIDATION,
+} from '../playwright.js';
 import { fixString } from './fix-string.js';
 
 type Args = ts.NodeArray<ts.Expression> | ts.NumericLiteral[] | ts.StringLiteral[] | ts.Expression[];
@@ -50,7 +57,8 @@ export type Factory = {
   functionWithPageParameter(
     node: ts.FunctionDeclaration | ts.VariableDeclaration
   ): ts.FunctionDeclaration | ts.VariableDeclaration;
-  parameter: (name: string) => ts.ParameterDeclaration;
+  methodWithPageParameter(node: ts.MethodDeclaration): ts.MethodDeclaration;
+  parameter: (name: string, type?: string) => ts.ParameterDeclaration;
   function(
     name: string,
     parameters: ts.ParameterDeclaration[] | ts.NodeArray<ts.ParameterDeclaration>,
@@ -81,6 +89,7 @@ export const nodeFactory = (factory: ts.NodeFactory): Factory => {
     playwrightLocatorProperty: createPlaywrightLocatorProperty(factory),
     playwrightIntercept: createPlaywrightIntercept(factory),
     functionWithPageParameter: createFunctionWithPageParameter(factory),
+    methodWithPageParameter: createMethodWithPageParameter(factory),
     parameter: createParameter(factory),
     function: createFunction(factory),
     exportToken: createExportToken(factory),
@@ -287,7 +296,16 @@ function createPlaywrightLocatorProperty(factory: ts.NodeFactory) {
 }
 
 function createParameter(factory: ts.NodeFactory) {
-  return function (name: string) {
+  return function (name: string, type?: string) {
+    if (type) {
+      return factory.createParameterDeclaration(
+        undefined,
+        undefined,
+        createIdentifier(factory)(name),
+        undefined,
+        factory.createTypeReferenceNode(type)
+      );
+    }
     return factory.createParameterDeclaration(undefined, undefined, createIdentifier(factory)(name));
   };
 }
@@ -441,7 +459,10 @@ function createFunctionWithPageParameter(factory: ts.NodeFactory) {
         undefined,
         createArrowFunction(factory)(
           (node.initializer as ts.ArrowFunction).body as ts.Block,
-          [createParameter(factory)(PLAYWRIGHT_PAGE_NAME), ...(parameters as unknown as ts.ParameterDeclaration[])],
+          [
+            createParameter(factory)(PLAYWRIGHT_PAGE_NAME, PLAYWRIGHT_PAGE_TYPE),
+            ...(parameters as unknown as ts.ParameterDeclaration[]),
+          ],
           [createAsyncToken(factory)()]
         )
       );
@@ -452,7 +473,7 @@ function createFunctionWithPageParameter(factory: ts.NodeFactory) {
       undefined,
       createIdentifier(factory)(name),
       typeParameters,
-      [createParameter(factory)(PLAYWRIGHT_PAGE_NAME), ...parameters],
+      [createParameter(factory)(PLAYWRIGHT_PAGE_NAME, PLAYWRIGHT_PAGE_TYPE), ...parameters],
       undefined,
       ts.isFunctionDeclaration(node) ? node.body : createEmptyBlock(factory)()
     );
@@ -481,5 +502,20 @@ function createFunction(factory: ts.NodeFactory) {
 function createExportToken(factory: ts.NodeFactory) {
   return () => {
     return factory.createToken(ts.SyntaxKind.ExportKeyword);
+  };
+}
+
+function createMethodWithPageParameter(factory: ts.NodeFactory) {
+  return function (node: ts.MethodDeclaration) {
+    return factory.createMethodDeclaration(
+      [createAsyncToken(factory)()],
+      node.asteriskToken,
+      node.name,
+      node.questionToken,
+      node.typeParameters,
+      [createParameter(factory)(PLAYWRIGHT_PAGE_NAME, PLAYWRIGHT_PAGE_TYPE), ...node.parameters],
+      node.type,
+      node.body
+    );
   };
 }

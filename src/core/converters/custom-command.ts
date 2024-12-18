@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { Factory } from './node-factory.js';
-import { PLAYWRIGHT_PAGE_NAME } from '../playwright.js';
+import { PLAYWRIGHT_PAGE_NAME, PLAYWRIGHT_PAGE_TYPE } from '../playwright.js';
 import { fixString } from './fix-string.js';
 
 export function handle(node: ts.ExpressionStatement, factory: Factory) {
@@ -10,7 +10,7 @@ export function handle(node: ts.ExpressionStatement, factory: Factory) {
 
   return factory.function(
     fixString(name),
-    [...callback.parameters, factory.parameter(PLAYWRIGHT_PAGE_NAME)],
+    [...callback.parameters, factory.parameter(PLAYWRIGHT_PAGE_NAME, PLAYWRIGHT_PAGE_TYPE)],
     callback.body || factory.emptyBlock(),
     [factory.exportToken(), factory.asyncToken()]
   );

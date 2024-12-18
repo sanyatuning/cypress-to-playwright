@@ -178,7 +178,7 @@ describe('Command', () => {
     createFileWithContent(
       resolve(ROOT_DIR, 'aTest.cy.js'),
       format(`
-        Cypress.Commands.add('log', () => {});
+        export function log() {}
     `)
     );
 
@@ -187,7 +187,7 @@ describe('Command', () => {
     assert.strictEqual(
       format(readFile(resolve(ROOT_DIR, '..', 'playwright', 'aTest.spec.js'))),
       format(`
-        export async function log(page){};
+        export function log(){};
       `)
     );
   });
@@ -218,6 +218,33 @@ describe('Command', () => {
         test('a test', async ({page}) => {
           log(page)
         });
+      `)
+    );
+  });
+
+  it('Replace class method when is in another file by normal function', () => {
+    createFileWithContent(
+      resolve(ROOT_DIR, 'support.ts'),
+      format(`
+        class Support {
+          visit() {
+            cy.visit('http://localhost')
+          }
+        };
+    `)
+    );
+
+    command.execute(ROOT_DIR, nullLogger);
+
+    assert.strictEqual(
+      format(readFile(resolve(ROOT_DIR, '..', 'playwright', 'support.ts'))),
+      format(`
+        import { Page, test, expect } from '@playwright/test';
+        class Support {
+          async visit(page: Page) {
+            await page.goto('http://localhost');
+          }
+        }
       `)
     );
   });

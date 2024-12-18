@@ -184,6 +184,7 @@ function isFunction(node: ts.Node | ts.VariableDeclaration) {
     (node as ts.VariableDeclaration).initializer &&
     ts.isArrowFunction(node.initializer as ts.Expression);
   return (
+    ts.isMethodDeclaration(node) ||
     ts.isFunctionDeclaration(node) ||
     isArrowFunctionDeclaration(node) ||
     (ts.isVariableStatement(node) && isArrowFunctionDeclaration(node.declarationList.declarations[0]))
@@ -199,6 +200,13 @@ function convertFunctionNode(
     const fnBodyContent = node.getFullText(sourceFile);
     if (includesCyCodeInFnCode(fnBodyContent)) {
       return factory.functionWithPageParameter(node);
+    }
+  }
+
+  if (ts.isMethodDeclaration(node)) {
+    const fnBodyContent = node.getFullText(sourceFile);
+    if (includesCyCodeInFnCode(fnBodyContent)) {
+      return factory.methodWithPageParameter(node);
     }
   }
 

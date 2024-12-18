@@ -80,8 +80,30 @@ describe('Converter', () => {
     assert.strictEqual(
       format(result),
       format(`
-      async function visit(page) {
+      async function visit(page: Page) {
         await page.goto('http://localhost');
+      }
+    `)
+    );
+  });
+  it('Convert cy code inside a class method declaration and inject "page" parameter', () => {
+    const result = converter(
+      `
+      class Support {
+        visit() {
+          cy.visit('http://localhost')
+        }
+      }`,
+      nulCustomCommandTracker
+    );
+
+    assert.strictEqual(
+      format(result),
+      format(`
+      class Support {
+        async visit(page: Page) {
+          await page.goto('http://localhost');
+        }
       }
     `)
     );
@@ -98,7 +120,7 @@ describe('Converter', () => {
     assert.strictEqual(
       format(result),
       format(`
-      async function visit(page, id) {
+      async function visit(page: Page, id) {
         await page.goto('http://localhost/' + id);
       }
     `)
@@ -134,7 +156,7 @@ describe('Converter', () => {
     assert.strictEqual(
       format(result),
       format(`
-      const visit = async (page) => {
+      const visit = async (page: Page) => {
         await page.goto('http://localhost');
       }
     `)
@@ -152,7 +174,7 @@ describe('Converter', () => {
     assert.strictEqual(
       format(result),
       format(`
-      const visit = async (page, id) => {
+      const visit = async (page: Page, id) => {
         await page.goto('http://localhost/' + id);
       }
     `)
@@ -196,7 +218,7 @@ describe('Converter', () => {
       test('visit', async ({ page }) => {
         await goToMainPage(page);
       });
-      async function goToMainPage(page) {
+      async function goToMainPage(page: Page) {
         await page.goto('http://localhost/');
       }
     `)
@@ -248,7 +270,7 @@ describe('Converter', () => {
       test('visit', async ({ page }) => {
         await goToMainPage(page);
       });
-      const goToMainPage = async (page) => {
+      const goToMainPage = async (page: Page) => {
         await page.goto('http://localhost/');
       }
     `)
@@ -282,7 +304,7 @@ describe('Converter', () => {
     assert.strictEqual(
       format(result),
       format(`
-        export async function myCommand(page){}
+        export async function myCommand(page: Page){}
         test('visit', async ({ page }) => {
           myCommand(page);
         });

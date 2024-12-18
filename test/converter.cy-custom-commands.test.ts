@@ -7,13 +7,13 @@ describe('Converter: Cypress Custom commands', () => {
   it('Migrate custom command into a normal function injecting page', () => {
     const result = converter("Cypress.Commands.add('login', () => {})", nulCustomCommandTracker);
 
-    assert.strictEqual(format(result), format('export async function login(page) {}'));
+    assert.strictEqual(format(result), format('export async function login(page: Page) {}'));
   });
 
   it('Migrate custom command with parameters into a normal function with parameters injecting page', () => {
     const result = converter("Cypress.Commands.add('login', (username, password) => {})", nulCustomCommandTracker);
 
-    assert.strictEqual(format(result), format('export async function login(username, password, page) {}'));
+    assert.strictEqual(format(result), format('export async function login(username, password, page: Page) {}'));
   });
 
   it('Migrate custom command migrating body too', () => {
@@ -29,7 +29,7 @@ describe('Converter: Cypress Custom commands', () => {
     assert.strictEqual(
       format(result),
       format(`
-      export async function addTodo(newItem, page) {
+      export async function addTodo(newItem, page: Page) {
         await page.locator('[data-test=new-todo]').type(\`\${newItem}{enter}\`);
       }
     `)
