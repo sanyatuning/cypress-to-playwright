@@ -27,9 +27,9 @@ export type Factory = {
   ): ts.CallExpression;
   destructuringParameter(parameterName: string): ts.ParameterDeclaration;
   awaitCallExpression(
-    expression: ts.PropertyAccessExpression | ts.CallExpression,
+    expression: ts.Expression,
     typeArguments?: ts.NodeArray<ts.TypeNode> | undefined,
-    args?: ts.NodeArray<ts.Expression> | ts.NumericLiteral[]
+    args?: ts.NodeArray<ts.Expression> | ts.Expression[]
   ): ts.AwaitExpression;
   await(expression: ts.CallExpression): ts.AwaitExpression;
   emptyBlock(): ts.Block;
@@ -126,11 +126,7 @@ function createPropertyAccessExpression(factory: ts.NodeFactory) {
 
 function createAwaitCallExpression(factory: ts.NodeFactory) {
   const callExpression = createCallExpression(factory);
-  return (
-    expression: ts.PropertyAccessExpression | ts.CallExpression,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-    args?: Args
-  ) => {
+  return (expression: ts.Expression, typeArguments?: ts.NodeArray<ts.TypeNode>, args?: Args) => {
     return factory.createAwaitExpression(callExpression(expression, typeArguments, args || ([] as Args)));
   };
 }

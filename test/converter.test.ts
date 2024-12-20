@@ -295,7 +295,10 @@ describe('Converter', () => {
       `
       Cypress.Commands.add('myCommand', () => {})
       test('visit', async ({ page }) => {
-        cy.myCommand(page);
+        cy.myCommand(someVar);
+        cy.myCommand(someVar).then((p1) => {
+          console.log(p1);
+        });
       });
   `,
       createInMemoryCustomCommandTracker()
@@ -306,7 +309,10 @@ describe('Converter', () => {
       format(`
         export async function myCommand(page: Page){}
         test('visit', async ({ page }) => {
-          myCommand(page);
+          await myCommand(page, someVar);
+          cy.myCommand(someVar).then((p1) => {;
+            console.log(p1);
+          });
         });
     `)
     );

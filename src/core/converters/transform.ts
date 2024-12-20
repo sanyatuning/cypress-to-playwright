@@ -53,7 +53,9 @@ export function transform(sourceFile: ts.SourceFile, customCommandsTracker: Cust
           return injectPageArgumentIntoCallFunction(foundFunctionDeclaration, sourceFile, factory, call, node);
         }
 
-        if (!isCyPropertyCall(expressionName, call)) return node;
+        if (!isCyPropertyCall(expressionName, call)) {
+          return node;
+        }
 
         if (isAction(expressionName)) {
           return actions.handle(expressionName, call.expression as ts.PropertyAccessExpression, factory);
@@ -67,10 +69,12 @@ export function transform(sourceFile: ts.SourceFile, customCommandsTracker: Cust
           return commands(expressionName, factory, call) || node;
         }
 
-        if (customCommandsTracker.exists(expressionName)) {
-          if (ts.isCallExpression(node.expression)) {
-            const expression = call.expression as ts.PropertyAccessExpression;
-            return factory.callExpression(expression.name, undefined, [factory.identifier(PLAYWRIGHT_PAGE_NAME)]);
+        if (ts.isPropertyAccessExpression(call.expression)) {
+          if (customCommandsTracker.exists(expressionName)) {
+            return factory.awaitCallExpression(call.expression.name, undefined, [
+              factory.identifier(PLAYWRIGHT_PAGE_NAME),
+              ...call.arguments,
+            ]);
           }
         }
 

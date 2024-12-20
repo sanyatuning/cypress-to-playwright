@@ -204,7 +204,7 @@ describe('Command', () => {
       resolve(ROOT_DIR, 'test.cy.js'),
       format(`
        it('a test', () => {
-        cy.log()
+        cy.log('foo bar')
        });
     `)
     );
@@ -216,7 +216,7 @@ describe('Command', () => {
       format(`
         import { test, expect } from '@playwright/test';
         test('a test', async ({page}) => {
-          log(page)
+          await log(page, 'foo bar')
         });
       `)
     );
